@@ -2,6 +2,7 @@
 import test from 'ava'
 import fn from './'
 
-test('title', t => {
-  t.is(fn('unicorns'), 'unicorns & rainbows')
+test('title', async t => {
+  const ret = await fn()
+  t.is(ret.flags.dbServer, 'http://localhost:5984')
 })

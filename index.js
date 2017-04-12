@@ -25,73 +25,46 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // core
 const url = require('url')
 
-/*
 // npm
-const envalid = require('envalid')
+const joi = require('joi')
+const clivage = require('clivage')
 
-const validators = {
-  BURLESK_DB: envalid.str({
-    default: 'burlesk',
-    desc: 'CouchDB database name',
-    example: 'burlesk',
-    docs: 'https://github.com/millette/burlesk'
-  }),
-  BURLESK_DB_READ: envalid.str({
-    default: false,
-    desc: 'CouchDB username for reader user',
-    example: 'bob',
-    docs: 'https://github.com/millette/burlesk'
-  }),
-  BURLESK_DB_READ_PW: envalid.str({
-    default: false,
-    desc: 'CouchDB password for reader user',
-    example: 'refelemele',
-    docs: 'https://github.com/millette/burlesk'
-  }),
-  BURLESK_DB_URL: envalid.url({
-    default: 'http://localhost:5984',
-    desc: 'CouchDB server URL',
-    example: 'https://example.cloudant.com',
-    docs: 'https://github.com/millette/burlesk'
-  })
+const schema = joi.object({
+  dbServer: joi.string().uri({scheme: ['http', 'https']}).default('http://localhost:5984').optional(),
+  user: joi.string().optional(),
+  password: joi.string().optional()
+})
+  .with('password', 'user')
+  .with('user', 'password')
+
+const help = `
+  Usage
+    $ burlesk [input]
+
+  Options
+    --db-server  CouchDB server url. [Default: http://localhost:5984]
+    --user       CouchDB username (optional).
+    --password   CouchDB password (optional).
+
+  If provided, user and password must both be set.
+
+  Examples
+    $ burlesk
+    unicorns & rainbows
+    $ burlesk ponies
+    ponies & rainbows`
+
+const alias = {
+  s: 'dbServer',
+  u: 'user',
+  p: 'password'
 }
 
-const secureWarning = 'Warning, sending password over http.'
-const checkEnv = (options) => {
-  const env = envalid.cleanEnv(process.env, validators, { strict: true })
-  if (!env.BURLESK_DB_READ !== !env.BURLESK_DB_READ_PW) {
-    console.error(`BURLESK_DB_READ: ${validators.BURLESK_DB_READ.desc}`)
-    console.error(`BURLESK_DB_READ_PW: ${validators.BURLESK_DB_READ_PW.desc}`)
-    throw new Error('BURLESK_DB_READ and BURLESK_DB_READ_PW must both be set or undefined.')
+const cli = clivage({ schema, help, alias })
+if (cli.flags.password) {
+  if (url.parse(cli.flags.dbServer).protocol === 'http:') {
+    console.error('Warning: password sent over http.')
   }
-  for (let r in env) {
-    if (env[r] === '') {
-      console.error(`${r}: ${validators[r].desc}`)
-      throw new Error(`${r} must not be empty.`)
-    }
-  }
-  const u = url.parse(env.BURLESK_DB_URL)
-  if (u.protocol === 'http:' && env.BURLESK_DB_READ_PW) {
-    console.error(`BURLESK_DB_URL: ${validators.BURLESK_DB_URL.desc}`)
-    console.error(`BURLESK_DB_READ_PW: ${validators.BURLESK_DB_READ_PW.desc}`)
-
-    if (options && options.secure) { throw new Error(secureWarning) }
-    console.error(secureWarning)
-  }
-  return env
 }
 
-const env = checkEnv({secure: true})
-
-console.log('ENV', env)
-*/
-
-module.exports = function (str, opts) {
-  if (typeof str !== 'string') {
-    throw new TypeError('Expected a string')
-  }
-
-  opts = opts || {}
-
-  return str + ' & ' + (opts.postfix || 'rainbows')
-}
+module.exports = () => Promise.resolve(cli)
